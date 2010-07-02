@@ -3,7 +3,7 @@
 
 <!-- PREPARATION -->
 <tstamp/>
-<taskdef classname="DrupalDrushTask" name="drush" classpath="${application.startdir}/buildlib/lib/" />
+<!--taskdef classname="DrupalDrushTask" name="drush" classpath="${application.startdir}/buildlib/lib/" /-->
 
 <!-- by default use the build.properties file -->
 <property file="buildlib/system.properties" />
