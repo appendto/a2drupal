@@ -2,20 +2,12 @@
 <project name="appendToDrupalBuild" default="help" basedir=".">
 
 <!-- PREPARATION -->
-  <tstamp/>
-  <taskdef classname="DrupalCvsModuleCheckoutTask" name="drupal-cvs-module-checkout" classpath="${application.startdir}/buildlib/lib/" />
-  <taskdef classname="DrupalCvsPackageCheckoutTask" name="drupal-cvs-package-checkout" classpath="${application.startdir}/buildlib/lib/" />
-  <taskdef classname="InstallFilesTask" name="install-files" classpath="${application.startdir}/buildlib/lib/" />
-  <taskdef classname="DrupalRemoveDrushTask" name="remove-drush" classpath="${application.startdir}/buildlib/lib/" />
-  <taskdef classname="DrupalDrushTask" name="drush" classpath="${application.startdir}/buildlib/lib/" />
-  <taskdef classname="DrupalDrushVariableSetTask" name="drush-variable-set" classpath="${application.startdir}/buildlib/lib/" />
+<tstamp/>
+<taskdef classname="DrupalDrushTask" name="drush" classpath="${application.startdir}/buildlib/lib/" />
 
-  <taskdef classname="DrupalBuild" name="drupalbuild" classpath="${application.startdir}/buildlib/lib/" />
-
-  <!-- by default use the build.properties file -->
-  <property name="profile" value="build" />
-  <property file="config/${profile}.properties" />
-  <property file="buildlib/system.properties" />
+<!-- by default use the build.properties file -->
+<property file="buildlib/build.properties" />
+<property file="buildlib/system.properties" />
 
 <!-- TARGET DEFINITIONS -->
 
@@ -40,230 +32,105 @@ http://appendto.com
 
 <!-- TARGET: verifyEnvironment -->
 <target name="local.verify">
+	<!-- Verify Properties -->
+	<if><not><isset property="db.super.user" /></not><then>
+		<fail>!!!!!! Database Super User not specified</fail>
+	</then></if>
+	<if><not><isset property="db.host" /></not><then>
+		<fail>!!!!!! Database Hostname not specified</fail>
+	</then></if>
+	<if><not><isset property="db.name" /></not><then>
+		<fail>!!!!!! Database Name not specified</fail>
+	</then></if>
+	<if><not><isset property="db.user" /></not><then>
+		<fail>!!!!!! Database Username not specified</fail>
+	</then></if>
+	<if><not><isset property="db.pass" /></not><then>
+		<fail>!!!!!! Database Password not specified</fail>
+	</then></if>
 	<!-- TODO -->
 	<!-- Verify existence of Drush -->
 	<!-- Verify existence of Drush Make -->
 </target>
 
-<!-- target: local.standalone -->
-<target name="local.standalone" />
-
 <!-- TARGET: local.db.create -->
-<target name="local.db.create" />
-
-<!-- TARGET: local.db.drop -->
-<target name="local.db.drop" />
-
-<!-- TARGET: local.db.reload -->
-<target name="local.db.reload" />
-
-<!-- TARGET: local.db.save -->
-<target name="local.db.save" />
-
-<!-- TARGET: local.db.load -->
-<target name="local.db.load" />
-
-<!-- TARGET: local.clean -->
-<target name="local.clean" />
-
-<!-- target: build.standalone -->
-<target name="build.standalone" />
-
-<!-- TARGET: build.installprofile -->
-<target name="build.installprofile" />
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<!-- =================================
-		target: Install core into htdocs
-     ================================= -->
-<target name="installCore" description="--> Fetches Drupal core from CVS">
+<target name="local.db.create" depends="local.verify" description="-> Creates local database environment">
 	<echo>-------------------------------------------------</echo>
-	<echo>        +++++ Installing Drupal Core +++++       </echo>
-  <echo>-------------------------------------------------</echo>
-
-	<!--Create drupal.dir if it doesn't exist-->
-	<available file="${application.startdir}/${drupal.dir}" type="dir" property="drupal.dir.dirExists" />
-	<if> <not><isset property="drupal.dir.dirExists" /></not> <then>
-		<echo> ${drupal.dir} does not exist, attempting to create...</echo>
-		<mkdir dir="${application.startdir}/${drupal.dir}"/>
-		</then>
-	</if>
-
-	<echo>Executing CVS command to fetch core...this may take a few minutes...</echo>
-  <exec command="${drupal.cvs.core.checkout}" dir="." passthru="true" />
-</target>
-
-<!-- =================================
-		target: Install modules into htdocs
-     ================================= -->
-<target name="installModules" depends="installCore" description="--> Fetches Drupal modules from CVS">
+	<echo>    +++++ Creating Database Environment +++++    </echo>
 	<echo>-------------------------------------------------</echo>
-	<echo>     +++++ Installing Drupal Modules +++++      </echo>
-	<echo>-------------------------------------------------</echo>
-
-	<!--Create drupal.modules.dir if it doesn't exist-->
-	<available file="${application.startdir}/${drupal.dir}/${drupal.modules.dir}" type="dir" property="drupal.modules.dir.dirExists" />
-	<if><not><isset property="drupal.modules.dir.dirExists" /></not><then>
-		<echo> ${drupal.dir}/${drupal.modules.dir} does not exist, attempting to create...</echo>
-		<mkdir dir="${application.startdir}/${drupal.dir}/${drupal.modules.dir}"/>
-		</then>
-	</if>
-	<property name="modules.dest" value="${drupal.dir}/${drupal.modules.dir}" />
-
-	<!--Create drupal.themes.dir if it doesn't exist-->
-	<available file="${application.startdir}/${drupal.dir}/${drupal.themes.dir}" type="dir" property="drupal.themes.dir.dirExists" />
-	<if><not><isset property="drupal.themes.dir.dirExists" /></not><then>
-		<echo> ${drupal.dir}${drupal.themes.dir} does not exist, attempting to create...</echo>
-		<mkdir dir="${application.startdir}/${drupal.dir}/${drupal.themes.dir}" />
-		</then>
-	</if>
-
-  <!-- Checkout packages from CVS -->
-  <drupal-cvs-package-checkout conf="${application.startdir}/buildlib/packages.conf" list="${build.drupal.packages}" checkoutpath="${drupal.cvs.module.checkout}" dir="." passthru="true" />
-
-  <!-- Checkout modules from CVS -->
-	<drupal-cvs-module-checkout conf="${application.startdir}/config/modules.conf" checkoutpath="${drupal.cvs.module.checkout}" dir="." passthru="true" />
-</target>
-
-<!-- =================================
-		target: Configure Drupal Settings
-     ================================= -->
-<target name="configureDrupal" depends="installCore" description="--> Modifies drupal database settings and creates a writable file directory">
-	<echo>-------------------------------------------------</echo>
-	<echo>         +++++ Configuring Drupal +++++          </echo>
-	<echo>-------------------------------------------------</echo>
-
-	<!--Make a backup of the settings file if it exists-->
-	<available file="${drupal.dir}/${drupal.settings.location}" property="drupal.settings.location.fileExists" />
-	<if><isset property="drupal.settings.location.fileExists" /><then>
-		<echo>Backing up existing ${drupal.dir}/${drupal.settings.location} file</echo>
-		<copy file="${drupal.dir}/${drupal.settings.location}" tofile="${drupal.dir}/${drupal.settings.location}.bak" overwrite="true" />
-	</then>
-	</if>
-
-	<!--Copy the settings from source if specified -->
-	<if><isset property="drupal.settings.source" /> <then>
-		<copy file="${drupal.dir}/${drupal.settings.source}" tofile="${drupal.dir}/${drupal.settings.location}" overwrite="true" />
-	</then>
-	</if>
-
-	<!--Bailout if we can't find a settings.php-->
-	<available file="${drupal.dir}/${drupal.settings.location}" property="drupal.settings.location.fileExistsAgain" />
-	<if><not><isset property="drupal.settings.location.fileExistsAgain" /></not><then>
-		<fail>Could not find Drupal settings file ${drupal.settings.location}</fail>
-	</then>
-	</if>
-
-	<reflexive file="${drupal.dir}/${drupal.settings.location}">
-		<filterchain><replaceregexp>
-			<regexp pattern = "\$db_url = 'mysql:\/\/username:password\@localhost\/databasename';" replace="\$db_url = '${drupal.database.Url}';" ignoreCase="true"/>
-			</replaceregexp>
-		</filterchain>
-	</reflexive>
-
-	<available file="${application.startdir}/${drupal.dir}/sites/default/files/" type="dir" property="drupal.files.dirExists" />
-	<if> <not><isset property="drupal.files.dirExists" /></not> <then>
-		<mkdir dir="${application.startdir}/${drupal.dir}/sites/default/files/" />
-	</then>
-	</if>
-
-	<exec command="chmod 777 -R ${application.startdir}/${drupal.dir}/sites/default/files/" dir="." passthru="true" />
-
-  <!-- Install manage.php into Drupal Directory -->
-	<install-files type="${install.type}"
-    srcdir="${application.startdir}/buildlib/"
-    destdir="${application.startdir}/${drupal.dir}/"
-    map="${application.startdir}/buildlib/manage.conf" 
-    dir="." 
-    passthru="true" />
-</target>
-
-<!-- =================================
-		target: installSourcecode
-     ================================= -->
-<target name="installSourcecode" depends="configureDrupal,installModules" description="--> Modifies Drupal Settings and creates a public download directory">
-	<echo>-------------------------------------------------</echo>
-	<echo>     +++++ Installing Custom Sourcecode +++++    </echo>
-	<echo>-------------------------------------------------</echo>
-
-  <!-- Install Files from /src into the Drupal Build directory -->
-	<install-files type="${install.type}"
-    srcdir="${application.startdir}/src/"
-    destdir="${application.startdir}/${drupal.dir}/"
-    map="${application.startdir}/config/files.conf" 
-    dir="." 
-    passthru="true" />
-</target>
-
-<!-- =================================
-		target: configureWebserver
-     ================================= -->
-<target name="configureWebserver" description="--> Installs an apache virtualhost entry and modifies local hosts file if necessary">
-	<echo>-------------------------------------------------</echo>
-	<echo>     +++++ Installing Custom Sourcecode +++++    </echo>
-	<echo>-------------------------------------------------</echo>
-
-	<mkdir dir="${application.startdir}/logs" />
-	<if><equals arg1="${website.alter.root}" arg2="true" trim="true" /><then>
-		<install-files type="${install.type}"
-			src="${application.startdir}/htdocs"
-			dest="${website.server.root}/${website.domain}/htdocs"
-			dir="." passthru="true" /></then>
-	</if>
-
-	<!-- install apache config, enable site, reload apache -->
-	<copy file="${application.startdir}/${website.config}"
-	      tofile="${application.startdir}/${website.config}.current"
-	      overwrite="true" />
-	<reflexive file="${application.startdir}/${website.config}.current">
+	<copy file="${application.startdir}/buildlib/sql/${db.env.create}" tofile="${application.startdir}/${db.dir}/my_${db.env.create}" overwrite="true" />
+	<reflexive file="${application.startdir}/${db.dir}/my_${db.env.create}">
 		<filterchain>
 			<replacetokens begintoken="##" endtoken="##">
-				<token key="WEBSITEDOMAIN" value="${website.domain}" />
-				<token key="WEBSITEALIAS" value="${website.aliases}" />
+				<token key="DBUSER" value="${db.user}" />
+				<token key="DBPASS" value="${db.pass}" />
+				<token key="DBNAME" value="${db.name}" />
+				<token key="DBHOST" value="${db.host}" />
 			</replacetokens>
 		</filterchain>
 	</reflexive>
-
-	<!-- FIXME: 'dest' a potentially unsafe assumption? -->
-	<install-files type="${install.type}"
-		src="${application.startdir}/${website.config}.current"
-		dest="/etc/apache2/sites-available/${website.domain}"
-		dir="." passthru="true" />
-	<exec command="a2ensite ${website.domain}" />
-
-	<echo>-------------------------------------------------</echo>
-	<echo>           Please restart the web server.        </echo>
-	<echo>-------------------------------------------------</echo>
-
-	<!-- make dns arrangments -->
-	<if><equals arg1="${website.alter.hosts}" arg2="true" trim="true" /><then>
-		<exec command=" grep -v ${website.domain} /etc/hosts &amp;&amp; sed -i -e 's/^127.0.0.1.*$/&amp; ${website.domain}/g' /etc/hosts" dir="." passthru="true" /></then>
-	</if>
+	<exec command="mysql --host=${db.host} -u ${db.super.user} -p &lt; ${application.startdir}/${db.dir}/my_${db.env.create}" dir="." passthru="true" />
+	<delete file="${application.startdir}/${db.dir}/my_${db.env.create}" />
 </target>
 
+<!-- TARGET: local.db.drop -->
+<target name="local.db.drop" depends="local.verify" description="-> Drops local database environment">
+	<copy file="${application.startdir}/buildlib/sql/${db.env.drop}" tofile="${application.startdir}/${db.dir}/my_${db.env.drop}" overwrite="true" />
+	<reflexive file="${application.startdir}/${db.dir}/my_${db.env.drop}">
+		<filterchain>
+			<replacetokens begintoken="##" endtoken="##">
+				<token key="DBUSER" value="${db.user}" />
+				<token key="DBNAME" value="${db.name}" />
+				<token key="DBHOST" value="${db.host}" />
+			</replacetokens>
+		</filterchain>
+	</reflexive>
+	<exec command="mysql --host=${db.host} -u ${db.super.user} -p &lt; ${application.startdir}/${db.dir}/my_${db.env.drop}" dir="." passthru="true" />
+	<delete file="${application.startdir}/${db.dir}/my_${db.env.drop}" />
+</target>
 
+<!-- TARGET: local.db.reload -->
+<target name="local.db.reload" depends="local.verify" description="-> Drops, then re-creates local database environment">
+	<echo>-------------------------------------------------</echo>
+	<echo>   +++++ Reloading Database Environment +++++    </echo>
+	<echo>-------------------------------------------------</echo>
+	<phingcall target="local.db.save" />
+	<phingcall target="local.db.drop" />
+	<phingcall target="local.db.create" />
+	<phingcall target="local.db.load" />
+</target>
 
+<!-- TARGET: local.db.save -->
+<target name="local.db.save" depends="local.verify" description="-> Saves a database snapshot">
+	<exec command="mysqldump --host=${db.host} --user=${db.user} --password=${db.pass} --opt ${db.name} > ${application.startdir}/${db.dir}/${db.snapshot}" dir="." passthru="true" />
+</target>
+
+<!-- TARGET: local.db.load -->
+<target name="local.db.load" depends="local.verify" description="-> Loads a database snapshot">
+	<exec command="mysql --host=${db.host} -u ${db.user} --password=${db.pass} ${db.name} &lt; ${application.startdir}/${db.dir}/${db.snapshot}" dir="." passthru="true" />
+</target>
+
+<!-- TARGET: local.clean -->
+<target name="local.clean" depends="local.verify" description="-> Cleans the local environment">
+	<echo>-------------------------------------------------</echo>
+	<echo>         +++++ Cleaning Installation +++++       </echo>
+	<echo>-------------------------------------------------</echo>
+	<exec command="rm -r ${drupal.dir}/*" dir="." passthru="TRUE"/>
+	<exec command="rm -r ${drupal.dir}/.*" dir="." passthru="TRUE"/>
+	<exec command="rm -r ${application.startdir}/build/" dir="." passthru="TRUE"/>
+
+	<!-- Destroy database -->
+	<phingcall target="local.db.drop" />
+</target>
+
+<!-- target: build.standalone -->
+<target name="build.standalone" depends="local.verify" description="-> Builds and configures a local, standlone Drupal site">
+	<!-- TODO -->
+	
+</target>
+
+<!-- TARGET: build.installprofile -->
+<target name="build.installprofile" depends="local.verify" description="-> Builds local system as a Drupal Installation Profile">
+	<!-- TODO -->
+</target>
 </project>
