@@ -6,8 +6,8 @@
 <taskdef classname="DrupalDrushTask" name="drush" classpath="${application.startdir}/buildlib/lib/" />
 
 <!-- by default use the build.properties file -->
-<property file="buildlib/build.properties" />
 <property file="buildlib/system.properties" />
+<property file="config.properties" />
 
 <!-- TARGET DEFINITIONS -->
 
