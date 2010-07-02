@@ -1,3 +1,11 @@
-# $Id: README.txt,v 1.7 2010/02/28 17:05:50 yhahn Exp $
+# $Id: README.txt,v 1.7 2010/02/28 17:05:50 mhostetler Exp $
 
-For more information visit: http://openatrium.com
+appendTo Drupal Development Environment
+
+This repository is designed to make it easy to develop a Drupal instance
+for use within the appendTo Drupal Deployment system.  The build system 
+is based on the PHP based build system called Phing (http://phing.info).
+
+To learn more, clone this project and run:
+
+$ phing -f build.xml
