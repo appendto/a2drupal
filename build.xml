@@ -3,7 +3,7 @@
 
 <!-- PREPARATION -->
 <tstamp/>
-<!--taskdef classname="DrupalDrushTask" name="drush" classpath="${application.startdir}/buildlib/lib/" /-->
+<taskdef classname="DrupalDrushTask" name="drush" classpath="${application.startdir}/buildlib/lib/" />
 
 <!-- by default use the build.properties file -->
 <property file="buildlib/system.properties" />
@@ -125,12 +125,19 @@ http://appendto.com
 
 <!-- target: build.standalone -->
 <target name="build.standalone" depends="local.verify" description="-> Builds and configures a local, standlone Drupal site">
-	<!-- TODO -->
-	
+	<exec command="${application.startdir}/buildlib/drush/drush.php make --prepare-install ${make.filename} ${drupal.standalone.dir}/" dir="." passthru="true" />
 </target>
 
-<!-- TARGET: build.installprofile -->
-<target name="build.installprofile" depends="local.verify" description="-> Builds local system as a Drupal Installation Profile">
-	<!-- TODO -->
+<!-- TARGET: build.platform -->
+<target name="build.platform" description="-> Builds local system as an Aegir Platform">
+	<!-- Create drupal.profile.dir if it doesn't exist -->
+	<available file="${application.startdir}/${drupal.profile.dir}" type="dir" property="drupal.profile.dir.dirExists" />
+	<if> <not><isset property="drupal.profile.dir.dirExists" /></not> <then>
+		<echo> ${drupal.profile.dir} does not exist, attempting to create...</echo>
+		<mkdir dir="${application.startdir}/${drupal.profile.dir}"/>
+		</then>
+	</if>
+
+	<exec command="${application.startdir}/buildlib/drush/drush.php make --yes --working-copy --no-core -r ${drupal.profile.dir} ${make.filename}" dir="." passthru="true" />
 </target>
 </project>
