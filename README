@@ -9,3 +9,24 @@ is based on the PHP based build system called Phing (http://phing.info).
 To learn more, clone this project and run:
 
 $ phing -f build.xml
+
+---------
+
+To Install:
+
+1. Before you start, be sure to have the following information:
+  a. Your mysql superuser password
+  b. A web accessible directory where you can view your Drupal site
+
+2. Clone the development repository for the site built on appendTo Drupal
+   into a local development directory.
+
+3. Edit the config.properties file, adding the desired names for your 
+   Drupal instance, database, make file name, etc.
+
+4. Run the following:
+  `phing build.standalone`
+
+5. Answer the prompts for your MySQL super user password.
+
+6. When the build script has finished, visit your new site!
